@@ -11,7 +11,7 @@ import torch
 import gym
 
 import spinup
-from spinup.user_config import DEFAULT_BACKEND
+from spinup.user_config import DEFAULT_BACKEND # Pytorch default
 from spinup.utils.run_utils import ExperimentGrid
 from spinup.utils.serialization_utils import convert_json
 
@@ -36,15 +36,17 @@ BASE_ALGO_NAMES = ['vpg', 'trpo', 'ppo', 'ddpg', 'td3', 'sac']
 # Methods def
 def add_with_backends(algo_list):
     # helper function to build lists with backend-specific function names
-    algo_list_with_backends = deepcopy(algo_list)
+    # algo_list_with_backends = deepcopy(algo_list)
+    algo_list_with_backends = []
     for algo in algo_list:
         algo_list_with_backends += [algo + '_tf1', algo + '_pytorch']
     return algo_list_with_backends
 
-
 def friendly_err(err_msg):
     # add whitespace to error message to make it more readable
     return '\n\n' + err_msg + '\n\n'
+
+
 
 
 def parse_and_execute_grid_search(cmd, args):
@@ -182,8 +184,11 @@ def parse_and_execute_grid_search(cmd, args):
     eg.run(algo, **run_kwargs)
 
 
+
+
 # Main
 if __name__ == '__main__':
+
     """
     This is a wrapper allowing command-line interfaces to individual
     algorithms and the plot / test_policy utilities.
@@ -208,7 +213,12 @@ if __name__ == '__main__':
         # Before all else, check to see if any of the flags is 'help'.
 
         # List commands that are available.
-        str_valid_cmds = '\n\t' + '\n\t'.join(valid_algos+valid_utils)
+        # str_valid_cmds = '\n\t' + '\n\t'.join(valid_algos+valid_utils)
+        str_valid_cmds = '\n' + '\tvalid_algos:' \
+                                + '\n\t\t' + '\n\t\t'.join(valid_algos)\
+                            + '\n\n' \
+                              + '\tvalid_utils:' \
+                                + '\n\t\t' + '\n\t\t'.join(valid_utils)
         help_msg = dedent("""
             Experiment in Spinning Up from the command line with
 
@@ -241,13 +251,23 @@ if __name__ == '__main__':
         print(special_info)
 
     elif cmd in valid_utils:
-        # Execute the correct utility file.
+        # Execute the correct utility file,
+        # (e.g. python -m spinup.run [arg1][cmd]test_policy [arg2]data/installtest/installtest_s0).
+        
         runfile = osp.join(osp.abspath(osp.dirname(__file__)), 'utils', cmd +'.py')
+        # (i.e. /home/sketcher/AI/RL/spinningup/spinup/utils/'cmd'.py)
+
         args = [sys.executable if sys.executable else 'python', runfile] + sys.argv[2:]
+        # (i.e. ['/home/sketcher/anaconda3/envs/spinningup/bin/python',
+        # '/home/sketcher/AI/RL/spinningup/spinup/utils/'cmd'.py',
+        # '/home/sketcher/AI/RL/spinningup/data/installtest/installtest_s0'],
+        # ...)
+
         subprocess.check_call(args, env=os.environ)
 
-    else:
-        # Assume that the user plans to execute an algorithm. Run custom
-        # parsing on the arguments and build a grid search to execute.
+    else: # valid_algos
+        # Assume that the user plans to execute an algorithm,
+        # (e.g. python -m spinup.run [arg1][cmd]ppo [arg2]--env HalfCheetah-v2).
+        # Run custom parsing on the arguments and build a grid search to execute.
         args = sys.argv[2:]
         parse_and_execute_grid_search(cmd, args)
