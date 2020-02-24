@@ -1,0 +1,24 @@
+
+
+a = '1000'
+A = eval(a)
+A = 1000
+
+print(i, arg in enumerate(args))
+1 arg1
+2 arg2
+3 arg3
+.
+.
+k argk
+.
+.
+.
+
+print(k,v in dict.items())
+'key1' 'element1'
+'key2' 'element2'
+'key3' 'element3'
+.
+.
+

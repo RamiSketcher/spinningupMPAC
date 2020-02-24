@@ -1,3 +1,5 @@
+# (Rami) Created, Feb 21, 2020
+
 import argparse
 import json
 import os, subprocess, sys
@@ -33,6 +35,7 @@ MPI_COMPATIBLE_ALGOS = ['vpg', 'trpo', 'ppo']
 # Algo names (used in a few places)
 BASE_ALGO_NAMES = ['vpg', 'trpo', 'ppo', 'ddpg', 'td3', 'sac']
 
+
 # Methods def
 def add_with_backends(algo_list):
     # helper function to build lists with backend-specific function names
@@ -46,18 +49,15 @@ def friendly_err(err_msg):
     # add whitespace to error message to make it more readable
     return '\n\n' + err_msg + '\n\n'
 
-
-
-
 def parse_and_execute_grid_search(cmd, args):
     """Interprets algorithm name and cmd line args into an ExperimentGrid."""
 
     if cmd in BASE_ALGO_NAMES:
-        backend = DEFAULT_BACKEND[cmd]
+        backend = DEFAULT_BACKEND[cmd] # Default is Pytorch except for TRPO
         print('\n\nUsing default backend (%s) for %s.\n'%(backend, cmd))
-        cmd = cmd + '_' + backend
+        cmd = cmd + '_' + backend # (e.g. ppo_pytorch)
 
-    algo = eval('spinup.'+cmd)
+    algo = eval('spinup.'+cmd) # (e.g. algo = spinup.ppo_pytorch)
 
     # Before all else, check to see if any of the flags is 'help'.
     valid_help = ['--help', '-h', 'help']
@@ -83,17 +83,18 @@ def parse_and_execute_grid_search(cmd, args):
         assert i > 0 or '--' in arg, \
             friendly_err("You didn't specify a first flag.")
         if '--' in arg:
-            arg_key = arg.lstrip('-')
+            arg_key = arg.lstrip('-') # remvoe -- from arg_flag (e.g. '--env' --> 'env')
             arg_dict[arg_key] = []
         else:
             arg_dict[arg_key].append(process(arg))
+        # arg_dict = {'env'(if '--' in arg): 'CartPole-v1'(else:)}
 
     # Make second pass through, to catch flags that have no vals.
     # Assume such flags indicate that a boolean parameter should have
-    # value True.
+    # value True. (e.g. --gpu = True/False)
     for k,v in arg_dict.items():
         if len(v) == 0:
-            v.append(True)
+            v.append(True) # If the non-vlaued arg_key called, then put (True) with it.
 
     # Third pass: check for user-supplied shorthands, where a key has
     # the form --keyname[kn]. The thing in brackets, 'kn', is the
@@ -103,20 +104,20 @@ def parse_and_execute_grid_search(cmd, args):
     given_shorthands = dict()
     fixed_keys = list(arg_dict.keys())
     for k in fixed_keys:
-        p1, p2 = k.find('['), k.find(']')
+        p1, p2 = k.find('['), k.find(']') # Det the order of [/] element (int)
         if p1 >= 0 and p2 >= 0:
             # Both '[' and ']' found, so shorthand has been given
-            k_new = k[:p1]
-            shorthand = k[p1+1:p2]
-            given_shorthands[k_new] = shorthand
+            k_new = k[:p1] # --keyname[kn] --> --keyname
+            shorthand = k[p1+1:p2] # --keyname[kn] --> kn
+            given_shorthands[k_new] = shorthand # {'--keyname': 'kn'}
             arg_dict[k_new] = arg_dict[k]
-            del arg_dict[k]
+            del arg_dict[k] # Nice!
 
     # Penultimate pass: sugar. Allow some special shortcuts in arg naming,
     # eg treat "env" the same as "env_name". This is super specific
     # to Spinning Up implementations, and may be hard to maintain.
     # These special shortcuts are described by SUBSTITUTIONS.
-    for special_name, true_name in SUBSTITUTIONS.items():
+    for special_name, true_name in SUBSTITUTIONS.items(): # Cool!
         if special_name in arg_dict:
             # swap it in arg dict
             arg_dict[true_name] = arg_dict[special_name]
@@ -136,7 +137,7 @@ def parse_and_execute_grid_search(cmd, args):
             val = arg_dict[k]
             assert len(val) == 1, \
                 friendly_err("You can only provide one value for %s."%k)
-            run_kwargs[k] = val[0]
+            run_kwargs[k] = val[0] # choose the 1st element
             del arg_dict[k]
 
     # Determine experiment name. If not given by user, will be determined
@@ -144,13 +145,13 @@ def parse_and_execute_grid_search(cmd, args):
     if 'exp_name' in arg_dict:
         assert len(arg_dict['exp_name']) == 1, \
             friendly_err("You can only provide one value for exp_name.")
-        exp_name = arg_dict['exp_name'][0]
+        exp_name = arg_dict['exp_name'][0] # choose the 1st element
         del arg_dict['exp_name']
     else:
         exp_name = 'cmd_' + cmd
 
     # Make sure that if num_cpu > 1, the algorithm being used is compatible
-    # with MPI.
+    # with MPI (Message Passing Interface). ['vpg', 'trpo', 'ppo'] only.
     if 'num_cpu' in run_kwargs and not(run_kwargs['num_cpu'] == 1):
         assert cmd in add_with_backends(MPI_COMPATIBLE_ALGOS), \
             friendly_err("This algorithm can't be run with num_cpu > 1.")
@@ -177,13 +178,11 @@ def parse_and_execute_grid_search(cmd, args):
         assert env_name in valid_envs, err_msg
 
 
-    # Construct and execute the experiment grid.
+    # Construct and execute the experiment grid (eg).
     eg = ExperimentGrid(name=exp_name)
     for k,v in arg_dict.items():
         eg.add(k, v, shorthand=given_shorthands.get(k))
     eg.run(algo, **run_kwargs)
-
-
 
 
 # Main

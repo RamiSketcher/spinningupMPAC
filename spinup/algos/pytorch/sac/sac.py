@@ -1,12 +1,22 @@
+# (Rami) Modified
+# (Rami & Gaffar) Done 1st reading, Feb 22, 2020
+
+# Imports
+## Basic Python Imports
 from copy import deepcopy
 import itertools
+import time
+
+## ML & RL Impoorts
 import numpy as np
 import torch
-from torch.optim import Adam
+from torch.optim import Adam # {Adanm, SGD, RMSprop, ...}
 import gym
-import time
+
+## SpinningUp Imports
 import spinup.algos.pytorch.sac.core as core
 from spinup.utils.logx import EpochLogger
+
 
 
 class ReplayBuffer:
@@ -41,7 +51,7 @@ class ReplayBuffer:
         return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
 
 
-
+# Soft Actor-Critic (SAC) Algorithm
 def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0, 
         steps_per_epoch=4000, epochs=100, replay_size=int(1e6), gamma=0.99, 
         polyak=0.995, lr=1e-3, alpha=0.2, batch_size=100, start_steps=10000, 
@@ -346,6 +356,8 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
             logger.log_tabular('LossQ', average_only=True)
             logger.log_tabular('Time', time.time()-start_time)
             logger.dump_tabular()
+
+
 
 if __name__ == '__main__':
     import argparse

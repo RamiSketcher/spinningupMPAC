@@ -1,12 +1,17 @@
+# (Rami) Modified
+
+# Imports
+## ML & RL Impoorts
 import numpy as np
 import scipy.signal
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions.normal import Normal
 
 
+
+# Helper functions
 def combined_shape(length, shape=None):
     if shape is None:
         return (length,)
@@ -26,6 +31,10 @@ def count_vars(module):
 LOG_STD_MAX = 2
 LOG_STD_MIN = -20
 
+
+# Agent's Neural Networks (Classes)
+
+## Actor Network
 class SquashedGaussianMLPActor(nn.Module):
 
     def __init__(self, obs_dim, act_dim, hidden_sizes, activation, act_limit):
@@ -66,7 +75,7 @@ class SquashedGaussianMLPActor(nn.Module):
 
         return pi_action, logp_pi
 
-
+## Critic Network
 class MLPQFunction(nn.Module):
 
     def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
@@ -77,6 +86,7 @@ class MLPQFunction(nn.Module):
         q = self.q(torch.cat([obs, act], dim=-1))
         return torch.squeeze(q, -1) # Critical to ensure q has right shape.
 
+## Actor-Critic Network
 class MLPActorCritic(nn.Module):
 
     def __init__(self, observation_space, action_space, hidden_sizes=(256,256),

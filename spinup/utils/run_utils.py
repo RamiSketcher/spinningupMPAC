@@ -1,8 +1,7 @@
-from spinup.user_config import DEFAULT_DATA_DIR, FORCE_DATESTAMP, \
-                               DEFAULT_SHORTHAND, WAIT_BEFORE_LAUNCH
-from spinup.utils.logx import colorize
-from spinup.utils.mpi_tools import mpi_fork, msg
-from spinup.utils.serialization_utils import convert_json
+# (Rami) Modified
+
+# Imports
+## Basic Python Imports
 import base64
 from copy import deepcopy
 import cloudpickle
@@ -19,6 +18,15 @@ from textwrap import dedent
 import time
 from tqdm import trange
 import zlib
+
+## SpinningUp Imports
+from spinup.user_config import DEFAULT_DATA_DIR, FORCE_DATESTAMP, \
+                               DEFAULT_SHORTHAND, WAIT_BEFORE_LAUNCH
+from spinup.utils.logx import colorize
+from spinup.utils.mpi_tools import mpi_fork, msg
+from spinup.utils.serialization_utils import convert_json
+
+
 
 DIV_LINE_WIDTH = 80
 
