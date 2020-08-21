@@ -19,7 +19,7 @@ from typing import Dict, Optional
 
 import numpy as np
 
-from pddm.envs.simulation import module
+from spinup.pddm_envs.simulation import module
 
 # Default window dimensions.
 DEFAULT_WINDOW_WIDTH = 1024

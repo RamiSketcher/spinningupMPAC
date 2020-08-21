@@ -25,7 +25,7 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 
-from pddm.envs.simulation.sim_robot import MujocoSimRobot, RenderMode
+from spinup.pddm_envs.simulation.sim_robot import MujocoSimRobot, RenderMode
 
 DEFAULT_RENDER_SIZE = 480
 

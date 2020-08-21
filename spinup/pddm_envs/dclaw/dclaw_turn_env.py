@@ -17,10 +17,15 @@ import numpy as np
 from gym import utils
 from mujoco_py import load_model_from_path, MjSim
 
-from pddm.envs import mujoco_env
-from pddm.envs.robot import Robot
-from pddm.envs.utils.quatmath import euler2quat
-from pddm.utils.helper_funcs import angle_difference
+from spinup.pddm_envs import mujoco_env
+from spinup.pddm_envs.robot import Robot
+from spinup.pddm_envs.utils.quatmath import euler2quat
+
+#from pddm.utils.helper_funcs import angle_difference
+## calculate angle difference and return radians [-pi, pi]
+def angle_difference(x, y):
+    angle_difference = np.arctan2(np.sin(x - y), np.cos(x - y))
+    return angle_difference
 
 
 class DClawTurnEnv(mujoco_env.MujocoEnv, utils.EzPickle):
