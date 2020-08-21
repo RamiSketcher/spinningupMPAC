@@ -2,6 +2,7 @@
 <br>
 
 **Status:** Maintenance (expect bug fixes and minor updates)
+**Added Algorithms:** (MEMB) Model Embedding Model-Based RL [Arxiv](https://arxiv.org/abs/2006.09234)
 
 Welcome to Spinning Up in Deep RL! 
 ==================================
