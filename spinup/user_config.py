@@ -13,7 +13,8 @@ DEFAULT_BACKEND = {
     'ppo': 'pytorch',
     'ddpg': 'pytorch',
     'td3': 'pytorch',
-    'sac': 'pytorch'
+    'sac': 'pytorch',
+    'memb': 'pytorch'
 }
 
 # Where experiment outputs are saved by default:

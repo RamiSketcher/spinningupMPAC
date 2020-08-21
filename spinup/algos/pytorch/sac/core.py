@@ -4,6 +4,7 @@
 ## ML & RL Impoorts
 import numpy as np
 import scipy.signal
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -38,18 +39,20 @@ LOG_STD_MIN = -20
 class SquashedGaussianMLPActor(nn.Module):
 
     def __init__(self, obs_dim, act_dim, hidden_sizes, activation, act_limit):
-        super().__init__()
+        super().__init__() # Don't inherent from nn.Module (self) variables
         self.net = mlp([obs_dim] + list(hidden_sizes), activation, activation)
-        self.mu_layer = nn.Linear(hidden_sizes[-1], act_dim)
-        self.log_std_layer = nn.Linear(hidden_sizes[-1], act_dim)
-        self.act_limit = act_limit
+        
+        self.mu_layer = nn.Linear(hidden_sizes[-1], act_dim) # Last layer of Actor mean
+        self.log_std_layer = nn.Linear(hidden_sizes[-1], act_dim) # Last layer of Actor std
+        
+        self.act_limit = act_limit # Action constraint
 
     def forward(self, obs, deterministic=False, with_logprob=True):
         net_out = self.net(obs)
         mu = self.mu_layer(net_out)
-        log_std = self.log_std_layer(net_out)
+        log_std = self.log_std_layer(net_out) # 
         log_std = torch.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
-        std = torch.exp(log_std)
+        std = torch.exp(log_std) # 
 
         # Pre-squash distribution and sample
         pi_distribution = Normal(mu, std)
@@ -70,8 +73,8 @@ class SquashedGaussianMLPActor(nn.Module):
         else:
             logp_pi = None
 
-        pi_action = torch.tanh(pi_action)
-        pi_action = self.act_limit * pi_action
+        pi_action = torch.tanh(pi_action) # [-1,1]
+        pi_action = self.act_limit * pi_action # [-|A|,+|A|]
 
         return pi_action, logp_pi
 

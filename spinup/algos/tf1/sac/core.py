@@ -37,8 +37,9 @@ def mlp_gaussian_policy(x, a, hidden_sizes, activation, output_activation):
     act_dim = a.shape.as_list()[-1]
     net = mlp(x, list(hidden_sizes), activation, activation)
     mu = tf.layers.dense(net, act_dim, activation=output_activation)
+
     log_std = tf.layers.dense(net, act_dim, activation=None)
-    log_std = tf.clip_by_value(log_std, LOG_STD_MIN, LOG_STD_MAX)
+    log_std = tf.clip_by_value(log_std, LOG_STD_MIN, LOG_STD_MAX) ##
 
     std = tf.exp(log_std)
     pi = mu + tf.random_normal(tf.shape(mu)) * std
@@ -61,8 +62,12 @@ def apply_squashing_func(mu, pi, logp_pi):
 """
 Actor-Critics
 """
-def mlp_actor_critic(x, a, hidden_sizes=(256,256), activation=tf.nn.relu, 
-                     output_activation=None, policy=mlp_gaussian_policy, action_space=None):
+def mlp_actor_critic(x, a,
+                     hidden_sizes=(256,256),
+                     activation=tf.nn.relu, 
+                     output_activation=None,
+                     policy=mlp_gaussian_policy,
+                     action_space=None):
     # policy
     with tf.variable_scope('pi'):
         mu, pi, logp_pi = policy(x, a, hidden_sizes, activation, output_activation)
@@ -79,4 +84,5 @@ def mlp_actor_critic(x, a, hidden_sizes=(256,256), activation=tf.nn.relu,
         q1 = vf_mlp(tf.concat([x,a], axis=-1))
     with tf.variable_scope('q2'):
         q2 = vf_mlp(tf.concat([x,a], axis=-1))
+        
     return mu, pi, logp_pi, q1, q2

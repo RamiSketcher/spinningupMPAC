@@ -1,5 +1,6 @@
 **Modified by:** Rami Sketcher <br>
 <br>
+
 **Status:** Maintenance (expect bug fixes and minor updates)
 
 Welcome to Spinning Up in Deep RL! 
