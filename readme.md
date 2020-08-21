@@ -1,6 +1,9 @@
 **Modified by:** Rami Sketcher <br>
 <br>
 
+**Added Algorithms:** (MEMB) Model Embedding Model-Based RL ([Arxiv](https://arxiv.org/abs/2006.09234))  <br>
+<br>
+
 **Status:** Maintenance (expect bug fixes and minor updates)
 
 Welcome to Spinning Up in Deep RL! 
