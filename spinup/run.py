@@ -39,7 +39,7 @@ SUBSTITUTIONS = {'env': 'env_name',
 MPI_COMPATIBLE_ALGOS = ['vpg', 'trpo', 'ppo']
 
 # Algo names (used in a few places)
-BASE_ALGO_NAMES = ['vpg', 'trpo', 'ppo', 'ddpg', 'td3', 'sac', 'memb']
+BASE_ALGO_NAMES = ['vpg', 'trpo', 'ppo', 'ddpg', 'td3', 'sac', 'memb', 'mpc_sac']
 
 
 # Methods def
@@ -48,7 +48,7 @@ def add_with_backends(algo_list):
     algo_list_with_backends = deepcopy(algo_list)
     for algo in algo_list:
         # algo_list_with_backends += [algo + '_tf1', algo + '_pytorch']
-        algo_list_with_backends += [algo + '_tf1', algo + '_pytorch', algo + '_pt_rami']
+        algo_list_with_backends += [algo + '_tf1', algo + '_pytorch']
     return algo_list_with_backends
 
 def friendly_err(err_msg):
