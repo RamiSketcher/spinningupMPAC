@@ -15,9 +15,9 @@ import gym
 
 ## Added by Rami >> ##
 # PyBullet Imports
-import pybullet_envs
-import pybullet as p
-p.connect(p.DIRECT)
+# import pybullet_envs
+# import pybullet as p
+# p.connect(p.DIRECT)
 
 ## SpinningUp Imports
 import spinup.algos.pytorch.memb.core as core
