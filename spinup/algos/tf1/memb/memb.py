@@ -22,6 +22,8 @@ from spinup.algos.tf1.memb.core import get_vars
 from spinup.utils.logx import EpochLogger
 ## << Added by Rami ##
 
+#from spinup.pddm_envs.gym_env import GymEnv
+
 class ReplayBuffer: # No changes
     """
     The replay buffer used to uniformly sample the data
@@ -415,7 +417,7 @@ if __name__ == '__main__':
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
     ## << Added by Rami ##
 
-    I = 5
+    I = 1
     for i in range(0,I):
         # repeat I times of experiment
         tf.reset_default_graph()

@@ -177,11 +177,9 @@ class MLPDynModel(nn.Module): # Rami (Done)
         std = torch.exp(log_std) 
 
         # Transition distribution 
-        # transition = torch.normal(mu, std)
         transition = Normal(mu, std)
-        # transition = transition.rsample()
 
-        return transition.rsample() # Determinstic dyn model
+        return transition.rsample()
 
 class MLPRewModel(nn.Module): # Rami (Done)
 
@@ -202,11 +200,10 @@ class MLPRewModel(nn.Module): # Rami (Done)
         log_std = torch.clamp(log_std, LOG_STD_MIN, LOG_STD_MAX)
         std = torch.exp(log_std) 
 
-        # Reward distribution 
-        # reward = torch.normal(mu, std)
+        # Reward distribution
         reward = Normal(mu, std)
 
-        return reward.rsample() # Determinstic rew model
+        return reward.rsample()
 
 class MLPModel(nn.Module): # Rami (Done)
 
@@ -219,7 +216,6 @@ class MLPModel(nn.Module): # Rami (Done)
 
         obs_dim = observation_space.shape[0]
         act_dim = action_space.shape[0]
-        act_limit = action_space.high[0]
 
         self.transition = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)
         # self.transition_pi = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation)

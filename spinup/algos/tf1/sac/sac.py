@@ -7,6 +7,8 @@ from spinup.algos.tf1.sac import core
 from spinup.algos.tf1.sac.core import get_vars
 from spinup.utils.logx import EpochLogger
 
+#from spinup.pddm_envs.gym_env import GymEnv
+
 
 class ReplayBuffer:
     """

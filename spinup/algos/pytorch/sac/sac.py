@@ -17,6 +17,7 @@ import gym
 import spinup.algos.pytorch.sac.core as core
 from spinup.utils.logx import EpochLogger
 
+from spinup.pddm_envs.gym_env import GymEnv
 
 
 class ReplayBuffer:

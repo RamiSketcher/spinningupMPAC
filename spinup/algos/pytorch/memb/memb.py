@@ -24,6 +24,8 @@ import spinup.algos.pytorch.memb.core as core
 from spinup.utils.logx import EpochLogger
 ## << Added by Rami ##
 
+from spinup.pddm_envs.gym_env import GymEnv
+
 
 class ReplayBuffer: # No changes
     """
@@ -438,9 +440,9 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
                 ## Added by Rami >> ##
                 # logger.log_tabular('DynM', with_min_and_max=True) 
                 # logger.log_tabular('RewM', with_min_and_max=True)
-                # logger.log_tabular('LossDyn', average_only=True)
-                # logger.log_tabular('LossRew', average_only=True)
-                logger.log_tabular('LossModel', average_only=True)
+                # logger.log_tabular('LossModel', average_only=True)
+                logger.log_tabular('LossDyn', average_only=True)
+                logger.log_tabular('LossRew', average_only=True)
                 ## << Added by Rami ##
 
                 logger.log_tabular('Time', time.time()-start_time)
@@ -459,8 +461,7 @@ if __name__ == '__main__': # (Done)
     import argparse
     parser = argparse.ArgumentParser()
 
-    # parser.add_argument('--env', type=str, default='MountainCarContinuous-v0')
-    parser.add_argument('--env', type=str, default='HopperBulletEnv-v0')
+    parser.add_argument('--env', type=str, default='HalfCheetah-v2')
     parser.add_argument('--hid', type=int, default=300)
     parser.add_argument('--l', type=int, default=2)
     parser.add_argument('--gamma', type=float, default=0.99)
@@ -471,8 +472,8 @@ if __name__ == '__main__': # (Done)
 
     parser.add_argument('--train_model_epoch', type=int, default=5) # Train f(s,a) after 5 epochs
     parser.add_argument('--test_freq', type=int, default=1)
-    # parser.add_argument('--env_name', type=str, default='MountainCarContinuous-v0')
-    # parser.add_argument('--env_name', type=str, default='HopperBulletEnv-v0')
+    # parser.add_argument('--env_name', type=str, default='HalfCheetah')
+    # parser.add_argument('--env_name', type=str, default='HalfCheetah-v2')
     # parser.add_argument('--save_epoch', type=int, default=500)
 
     args = parser.parse_args()
@@ -487,7 +488,6 @@ if __name__ == '__main__': # (Done)
     I = 1
     for i in range(0,I):
         # repeat I times of experiment
-        tf.reset_default_graph()
         memb(lambda : gym.make(args.env),
 
                     actor_critic=core.mlp_actor_critic,
@@ -496,7 +496,7 @@ if __name__ == '__main__': # (Done)
 
                     gamma=args.gamma,
                     seed=args.seed,
-                    epochs=args.epochs, # 100
+                    epochs=args.epochs, # 200
 
                     save_freq=i, # 0,1,2,3,4
                     train_model_epoch=args.train_model_epoch, # 5
