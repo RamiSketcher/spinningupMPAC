@@ -26,7 +26,7 @@ setup(
         'psutil',
         'scipy',
         'seaborn',
-        #'tensorflow>=1.8.0,<2.0',
+        #'tensorflow==1.15',
         #'torch',
         'tqdm'
     ],
