@@ -159,7 +159,7 @@ be adjusted in each subnetworks.
 ## Model Network ##
 class MLPDynModel(nn.Module): # Rami (Done)
 
-    def __init__(self, obs_dim, act_dim, hidden_sizes=(32,16), activation=nn.ReLU, output_activation=None):
+    def __init__(self, obs_dim, act_dim, hidden_sizes, activation=nn.ReLU, output_activation=None):
         super().__init__()
         self.net = mlp([obs_dim + act_dim] + list(hidden_sizes), activation, activation)
         self.mu_layer = nn.Linear(hidden_sizes[-1], obs_dim)
@@ -185,7 +185,7 @@ class MLPDynModel(nn.Module): # Rami (Done)
 
 class MLPRewModel(nn.Module): # Rami (Done)
 
-    def __init__(self, obs_dim, act_dim, hidden_sizes=(32,16), activation=nn.ReLU, output_activation=None):
+    def __init__(self, obs_dim, act_dim, hidden_sizes, activation=nn.ReLU, output_activation=None):
         super().__init__()
         self.net = mlp([obs_dim + act_dim] + list(hidden_sizes), activation, activation)
         self.mu_layer = nn.Linear(hidden_sizes[-1], 1)
@@ -212,7 +212,7 @@ class MLPModel(nn.Module): # Rami (Done)
 
     def __init__(self,
                  observation_space, action_space,
-                 hidden_sizes=(32,16),
+                 hidden_sizes=(256,128),
                  activation=nn.ReLU,
                  output_activation=None):
         super().__init__()
