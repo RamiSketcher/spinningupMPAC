@@ -440,9 +440,9 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
                 ## Added by Rami >> ##
                 # logger.log_tabular('DynM', with_min_and_max=True) 
                 # logger.log_tabular('RewM', with_min_and_max=True)
-                # logger.log_tabular('LossModel', average_only=True)
-                logger.log_tabular('LossDyn', average_only=True)
-                logger.log_tabular('LossRew', average_only=True)
+                logger.log_tabular('LossModel', average_only=True)
+                # logger.log_tabular('LossDyn', average_only=True)
+                # logger.log_tabular('LossRew', average_only=True)
                 ## << Added by Rami ##
 
                 logger.log_tabular('Time', time.time()-start_time)
