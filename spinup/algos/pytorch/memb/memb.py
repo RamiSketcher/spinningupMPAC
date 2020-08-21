@@ -15,9 +15,9 @@ import gym
 
 ## Added by Rami >> ##
 # PyBullet Imports
-import pybullet_envs
-import pybullet as p
-p.connect(p.DIRECT)
+# import pybullet_envs
+# import pybullet as p
+# p.connect(p.DIRECT)
 
 ## SpinningUp Imports
 import spinup.algos.pytorch.memb.core as core
@@ -176,7 +176,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         v_prime = ac.v(transition_pi)
 
         # Entropy-regularized policy loss
-        loss_pi = (r_rm_pi - alpha*logp_pi + gamma*(1-d)*v_prime).mean()
+        loss_pi = -(r_rm_pi - alpha*logp_pi + gamma*(1-d)*v_prime).mean()
 
         # Useful info for logging
         pi_info = dict(LogPi=logp_pi.detach().numpy())
@@ -261,7 +261,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         # Next run one gradient descent step for pi.
         pi_optimizer.zero_grad()
         loss_pi, pi_info = compute_loss_pi(data)
-        (-loss_pi).backward() # Ascent
+        (loss_pi).backward() # Ascent
         pi_optimizer.step()
 
         # Record things
@@ -307,7 +307,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
 
 
     def test_agent(epoch,n=1): # (Done)
-        # global mu, pi, q1, q2, q1_pi, q2_pi
+        global mu, pi, q1, q2, q1_pi, q2_pi
         total_reward = 0
         for j in range(n): # repeat n=5 times
             o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
