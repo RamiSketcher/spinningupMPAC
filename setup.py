@@ -15,7 +15,7 @@ setup(
     version=__version__,#'0.1',
     install_requires=[
         'cloudpickle',
-        #'gym[atari,box2d,classic_control]',
+        'gym[atari,box2d,classic_control]',
         'ipython',
         'joblib',
         'matplotlib',
@@ -25,7 +25,7 @@ setup(
         'pytest',
         'psutil',
         'scipy',
-        'seaborn',
+        'seaborn==0.8.1',
         #'tensorflow==1.15',
         #'torch',
         'tqdm'
