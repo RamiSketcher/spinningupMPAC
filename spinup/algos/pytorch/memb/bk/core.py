@@ -177,9 +177,9 @@ class MLPDynModel(nn.Module): # Rami (Done)
         std = torch.exp(log_std) 
 
         # Transition distribution 
-        delta = Normal(mu, std)
+        transition = Normal(mu, std)
 
-        return delta.rsample()
+        return transition.rsample()
 
 class MLPRewModel(nn.Module): # Rami (Done)
 
@@ -217,7 +217,7 @@ class MLPModel(nn.Module): # Rami (Done)
         obs_dim = observation_space.shape[0]
         act_dim = action_space.shape[0]
 
-        self.delta = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)
+        self.transition = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)
         # self.transition_pi = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation)
         
         self.reward = MLPRewModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)

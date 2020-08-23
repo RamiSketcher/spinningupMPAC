@@ -65,11 +65,11 @@ Model Embedding Model Based Algorithm (MEMB)
 """
 # InvertedPen
 def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.MLPModel,
-        seed=0, steps_per_epoch=1000, epochs=100, replay_size=int(1e6), gamma=0.99,
-        polyak=0.995, model_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alpha=0.2,
-        batch_size=100, start_steps=2000,
-        max_ep_len=40, save_freq=1,# max_ep_len=1000
-        train_model_epoch=1, test_freq=5, save_epoch=100,
+        seed=0, steps_per_epoch=1000, epochs=200, replay_size=int(1e6), gamma=0.99,
+        polyak=0.995, model_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alpha=0.4,
+        batch_size=100, start_steps=1000,
+        max_ep_len=1000, save_freq=1,
+        train_model_epoch=5, test_freq=5, save_epoch=100,
         exp_name='', env_name='',
         logger_kwargs=dict()):
 
@@ -108,7 +108,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
     val_params = itertools.chain(ac.q1.parameters(), ac.q2.parameters(), ac.v.parameters())
 
     # List of parameters for all Model-networks (save this for convenience)
-    md_params = itertools.chain(md.delta.parameters(), md.reward.parameters())
+    md_params = itertools.chain(md.transition.parameters(), md.reward.parameters())
 
     # Experience buffer
     replay_buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
@@ -116,7 +116,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
     ## Added by Rami >> ##
     # Count variables
     # var_counts = tuple(core.count_vars(scope) for scope in ['main/dm', 'main/rm', 'main/pi', 'main/v', 'main/q1', 'main/q2', 'main'])
-    var_counts = tuple(core.count_vars(module) for module in [md.delta, md.reward, ac.pi, ac.q1, ac.q2, ac.v, md, ac])
+    var_counts = tuple(core.count_vars(module) for module in [md.transition, md.reward, ac.pi, ac.q1, ac.q2, ac.v, md, ac])
     # print('\nNumber of parameters: \t dm: %d, \t rm: %d, \t pi: %d, \t v: %d, \t q1: %d, \t q2: %d, \t total: %d\n'%var_counts)
     logger.log('\nNumber of parameters: \t dm: %d, \t rm: %d, \t pi: %d, \t q1: %d, \t q2: %d, \t v: %d, \t total: %d+%d\n'%var_counts)
     ## << Added by Rami ##
@@ -142,16 +142,15 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
 
         o, a, r, o2 = data['obs'], data['act'], data['rew'], data['obs2']
         
-        delta = md.delta(o,a)
-        transition = o + delta
+        transition = md.transition(o,a)
         r_rm = md.reward(o,a)
 
-        delta_backup = o2 - o
+        transition_backup = o2
         r_backup = r
         
-        loss_delta = ((delta_backup - delta)**2).mean()
+        loss_transition = ((transition_backup - transition)**2).mean()
         loss_r = ((r_backup-r_rm)**2).mean()
-        loss_model = loss_delta + loss_r
+        loss_model = loss_transition + loss_r
 
         # Useful info for logging
         model_info = dict(Dyn=transition.detach().numpy(),
@@ -174,8 +173,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
 
         pi, logp_pi = ac.pi(o)
 
-        delta_pi = md.delta(o,pi)
-        transition_pi = o + delta_pi
+        transition_pi = md.transition(o,pi)
         r_rm_pi = md.reward(o,pi)
         v_prime = ac.v(transition_pi)
 
