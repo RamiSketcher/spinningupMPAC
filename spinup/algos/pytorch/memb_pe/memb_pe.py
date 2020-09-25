@@ -27,7 +27,7 @@ from spinup.utils.logx import EpochLogger
 from spinup.pddm_envs.gym_env import GymEnv
 
 
-device = torch.device("cuda:0")
+device = torch.device("cpu")
 
 
 
@@ -70,8 +70,8 @@ Model Embedding Model Based Algorithm (MEMB)
 # InvertedPen
 def memb_pe(
         env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.MLPModel,
-        seed=0, steps_per_epoch=2000, epochs=500, replay_size=int(1e6), gamma=0.99,
-        polyak=0.995, model_lr=3e-4, dyn_lr=3e-4, rew_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alpha=0.4,
+        seed=0, steps_per_epoch=4000, epochs=125, replay_size=int(1e6), gamma=0.99,
+        polyak=0.995, dyn_lr=3e-4, rew_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alpha=0.4,
         Gsteps=5, batch_size=100, start_steps=1000,
         max_ep_len=40, save_freq=1,
         train_model_epoch=5, test_freq=2, num_tests=5, save_epoch=100,
@@ -121,9 +121,8 @@ def memb_pe(
 
     ## Added by Rami >> ##
     # Count variables
-    var_counts = tuple(core.count_vars(module) for module in [md, ac.pi, ac.q1, ac.q2, ac.v, ac])
-    # print('\nNumber of parameters: \t dm: %d, \t rm: %d, \t pi: %d, \t v: %d, \t q1: %d, \t q2: %d, \t total: %d\n'%var_counts)
-    logger.log('\nNumber of parameters: \t model: %d, \t pi: %d, \t q1: %d, \t q2: %d, \t v: %d, \t totalAC: %d\n'%var_counts)
+    var_counts = tuple(core.count_vars(module) for module in [md, ac])
+    logger.log('\nNumber of parameters: \t totalModel: %d, \t totalAC: %d\n'%var_counts)
     ## << Added by Rami ##
 
 
@@ -137,40 +136,6 @@ def memb_pe(
     #       Jp(omega) = 0.5 Expt_D[(f(s,a)-s')^2] --> eq#4.a
     #       Jr(ph) = Expt_D[(r(s,a)-r)^2] --> eq#4.b    
     #           min_omeg,ph{ Jp(omeg), Jr(ph) }
-    def compute_loss_model(data): # Rami (Done)
-
-        o, a, r, o2 = data['obs'], data['act'], data['rew'], data['obs2']
-        
-        delta_backup = o2 - o
-        loss_delta1 = ((delta_backup - md.delta.delta1(o,a))**2).mean()
-        loss_delta2 = ((delta_backup - md.delta.delta2(o,a))**2).mean()
-        loss_delta3 = ((delta_backup - md.delta.delta3(o,a))**2).mean()
-        loss_dyn = (loss_delta1 + loss_delta2 + loss_delta3)/3
-        
-        r_backup = r
-        loss_r1 = ((r_backup - md.reward.reward1(o,a))**2).mean()
-        loss_r2 = ((r_backup - md.reward.reward2(o,a))**2).mean()
-        loss_r3 = ((r_backup - md.reward.reward3(o,a))**2).mean()
-        loss_rew = (loss_r1 + loss_r2 + loss_r3)/3
-
-        # loss_model = loss_dyn + loss_rew
-
-        # Useful info for logging
-        model_info = dict(
-                        LossDyn=loss_dyn.item(),
-                        # LossDelta1=loss_delta1.item(),
-                        # LossDelta2=loss_delta2.item(),
-                        # LossDelta3=loss_delta3.item(),
-
-                        LossRew=loss_rew.item(),
-                        # LossR1=loss_r1.item(),
-                        # LossR2=loss_r2.item(),
-                        # LossR3=loss_r3.item(),
-                        # LossModel=loss_model.item()
-                          )
-        
-        return loss_dyn, loss_rew, model_info
-
 
     def compute_loss_dyn(data): # Rami (Done)
 
@@ -208,8 +173,7 @@ def memb_pe(
                         LossRew=loss_rew.item(),
                         # LossR1=loss_r1.item(),
                         # LossR2=loss_r2.item(),
-                        # LossR3=loss_r3.item(),
-                        # LossModel=loss_model.item()
+                        # LossR3=loss_r3.item()
                         )
         
         return loss_rew, rew_info
@@ -283,7 +247,6 @@ def memb_pe(
         return loss_val, val_info
     
     # Set up optimizers for model, policy and value-functions
-    # model_optimizer = Adam(md.parameters(), lr=model_lr) # Rami
     dyn_optimizer = Adam(md.delta.parameters(), lr=dyn_lr) # Rami
     rew_optimizer = Adam(md.reward.parameters(), lr=rew_lr) # Rami
 
@@ -344,25 +307,6 @@ def memb_pe(
 
 
 
-    def updateModel(data): # Rami (Done)
-
-        # print("Model updating..")
-        # Run one gradient descent step for model
-        dyn_optimizer.zero_grad()
-        rew_optimizer.zero_grad()
-
-        loss_dyn, loss_rew, model_info = compute_loss_model(data)
-
-        loss_dyn.backward() # Descent
-        loss_rew.backward() # Descent
-
-        dyn_optimizer.step()
-        rew_optimizer.step()
-
-        # Record things
-        logger.store(**model_info)
-
-
     def updateDyn(data): # Rami (Done)
 
         # print("Model updating..")
@@ -387,7 +331,6 @@ def memb_pe(
         # Record things
         logger.store(**rew_info)
 
-        return loss_rew
 
 
 
@@ -468,30 +411,17 @@ def memb_pe(
             for j in range(Gsteps):
                 batch = replay_buffer.sample_batch(batch_size)
                 updateAC(data=batch)
-            # updateModel(data=batch) # Rami
             updateDyn(data=batch)
-            # if (t+1) % 100 == 0:
-            #     for j in range(5):
-            # batch = replay_buffer.sample_batch(int((t+1)/5))
-            loss_rew = updateRew(data=batch)
-            if (t+1) % 100 == 0:
-                print('loss_rew: ', loss_rew.item())
+            updateRew(data=batch)
 
         else:
             # pretrain the model
             batch = replay_buffer.sample_batch(batch_size)
-            # updateModel(data=batch) # Rami 
             updateDyn(data=batch)
-            # if (t+1) % 100 == 0:
-            #     for j in range(5):
-            # batch = replay_buffer.sample_batch(int((t+1)/5))
-            loss_rew = updateRew(data=batch)
-            if (t+1) % 100 == 0:
-                print('loss_rew: ', loss_rew.item())
+            updateRew(data=batch)
 
 
         # End of epoch wrap-up
-        # if t > 0 and t % steps_per_epoch == 0:
         if (t+1) % steps_per_epoch == 0:
             # epoch = t // steps_per_epoch
             epoch = (t+1) // steps_per_epoch
@@ -502,15 +432,7 @@ def memb_pe(
                 logger.save_state({'env': env}, None)
             ## << Added by Rami ##
 
-            # if epoch > 5 and epoch % 10 == 0 start to test the agent:
-            # if epoch > train_model_epoch and epoch % test_freq == 0:
-            # if epoch > train_model_epoch and epoch % 1 == 0:
-                # test the agent when we reach the test_freq:
             test_agent()
-            # save the experiment result:
-            # reward_recorder.append(reward_test)
-            # reward_nparray = np.asarray(reward_recorder)
-            # np.save(str(exp_name)+'_'+str(env_name)+'_'+str(save_freq)+'.npy',reward_nparray)
 
             ## Added by Rami >> ##
             logger.log_tabular('Epoch', epoch)
@@ -534,9 +456,7 @@ def memb_pe(
             # logger.log_tabular('LossV', average_only=True)
             logger.log_tabular('LossVal', average_only=True)
 
-
             ## Added by Rami >> ##
-            # logger.log_tabular('LossModel', average_only=True)
             logger.log_tabular('LossDyn', average_only=True)
             logger.log_tabular('LossRew', average_only=True)
             ## << Added by Rami ##
@@ -544,11 +464,6 @@ def memb_pe(
             logger.log_tabular('Time', time.time()-start_time)
             logger.dump_tabular()
             ## << Added by Rami ##
-
-            # if epoch % save_epoch == 0:
-            #     # save the model after the final epoch:
-            #     saver.save(sess, str(exp_name)+'_'+str(env_name),global_step=epoch)
-
 
 
 
@@ -580,30 +495,26 @@ if __name__ == '__main__': # (Done)
     torch.set_num_threads(torch.get_num_threads())
     ## << Added by Rami ##
 
-    I = 1
-    for i in range(0,I):
-        # repeat I times of experiment
-        memb_pe(lambda : gym.make(args.env),
+    # I = 1
+    # for i in range(0,I):
+    #     # repeat I times of experiment
+    memb_pe(lambda : gym.make(args.env),
 
-                    actor_critic=core.mlp_actor_critic,
-                    ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
-                    model=core.MLPModel,
+                actor_critic=core.mlp_actor_critic,
+                ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
+                model=core.MLPModel,
 
-                    gamma=args.gamma,
-                    seed=args.seed,
-                    epochs=args.epochs, # 200
+                gamma=args.gamma,
+                seed=args.seed,
+                epochs=args.epochs, # 200
 
-                    save_freq=i, # 0,1,2,3,4
-                    train_model_epoch=args.train_model_epoch, # 5
-                    test_freq=args.test_freq, # 10
+                # save_freq=i, # 0,1,2,3,4
+                train_model_epoch=args.train_model_epoch, # 5
+                test_freq=args.test_freq, # 10
 
-                    exp_name=args.exp_name,
-                    env_name=args.env_name,
-                    # save_epoch=args.save_epoch,
-                    
-                    logger_kwargs=logger_kwargs)
+                exp_name=args.exp_name,
+                env_name=args.env_name,
+                # save_epoch=args.save_epoch,
+                
+                logger_kwargs=logger_kwargs)
 
-
-
-## Added by Rami >> ##
-## << Added by Rami ##

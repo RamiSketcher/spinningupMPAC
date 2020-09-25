@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions.normal import Normal
 
-device = torch.device("cuda:0")
+device = torch.device("cpu")
 
 EPS = 1e-8
 
