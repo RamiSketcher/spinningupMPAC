@@ -65,11 +65,11 @@ Model Embedding Model Based Algorithm (MEMB)
 """
 # InvertedPen
 def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.MLPModel,
-        seed=0, steps_per_epoch=1000, epochs=200, replay_size=int(1e6), gamma=0.99,
+        seed=0, steps_per_epoch=4000, epochs=125, replay_size=int(1e6), gamma=0.99,
         polyak=0.995, model_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alpha=0.4,
-        batch_size=100, start_steps=1000,
-        max_ep_len=1000, save_freq=1,
-        train_model_epoch=5, test_freq=5, save_epoch=100,
+        batch_size=100, start_steps=40,
+        max_ep_len=1000, save_freq=1,# max_ep_len=1000
+        train_model_epoch=5, test_freq=2, save_epoch=100,
         exp_name='', env_name='',
         logger_kwargs=dict()):
 
@@ -105,10 +105,10 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         p.requires_grad = False
         
     # List of parameters for all Value-networks (save this for convenience)
-    val_params = itertools.chain(ac.q1.parameters(), ac.q2.parameters(), ac.v.parameters())
+    # val_params = itertools.chain(ac.q1.parameters(), ac.q2.parameters(), ac.v.parameters())
 
     # List of parameters for all Model-networks (save this for convenience)
-    md_params = itertools.chain(md.delta.parameters(), md.reward.parameters())
+    # md_params = itertools.chain(md.delta.parameters(), md.reward.parameters())
 
     # Experience buffer
     replay_buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
@@ -116,9 +116,9 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
     ## Added by Rami >> ##
     # Count variables
     # var_counts = tuple(core.count_vars(scope) for scope in ['main/dm', 'main/rm', 'main/pi', 'main/v', 'main/q1', 'main/q2', 'main'])
-    var_counts = tuple(core.count_vars(module) for module in [md.delta, md.reward, ac.pi, ac.q1, ac.q2, ac.v, md, ac])
+    var_counts = tuple(core.count_vars(module) for module in [md.delta, md.reward, md, ac.pi, ac.q1, ac.q2, ac.v, ac])
     # print('\nNumber of parameters: \t dm: %d, \t rm: %d, \t pi: %d, \t v: %d, \t q1: %d, \t q2: %d, \t total: %d\n'%var_counts)
-    logger.log('\nNumber of parameters: \t dm: %d, \t rm: %d, \t pi: %d, \t q1: %d, \t q2: %d, \t v: %d, \t total: %d+%d\n'%var_counts)
+    logger.log('\nNumber of parameters: \t dm: %d, \t rm: %d, \t total_m: %d, \t pi: %d, \t q1: %d, \t q2: %d, \t v: %d, \t total: %d\n'%var_counts)
     ## << Added by Rami ##
 
 
@@ -150,7 +150,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         r_backup = r
         
         loss_delta = ((delta_backup - delta)**2).mean()
-        loss_r = ((r_backup-r_rm)**2).mean()
+        loss_r = ((r_backup - r_rm)**2).mean()
         loss_model = loss_delta + loss_r
 
         # Useful info for logging
@@ -201,10 +201,6 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         q2 = ac.q2(o,a)
         v = ac.v(o)
 
-        # q1_pi = ac.q1(o,pi)
-        # q2_pi = ac.q2(o,pi)
-        # min_q_pi = torch.min(q1_pi, q2_pi)
-
         # Bellman backup for Value functions
         with torch.no_grad():
             # Target value function
@@ -232,8 +228,9 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         return loss_val, val_info
     
     # Set up optimizers for model, policy and value-functions
-    model_optimizer = Adam(md_params, lr=model_lr) # Rami
+    model_optimizer = Adam(md.parameters(), lr=model_lr) # Rami
     pi_optimizer = Adam(ac.pi.parameters(), lr=pi_lr)
+    val_params = itertools.chain(ac.q1.parameters(), ac.q2.parameters(), ac.v.parameters())
     val_optimizer = Adam(val_params, lr=value_lr) # Rami
 
 
@@ -266,7 +263,7 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         # Next run one gradient descent step for pi.
         pi_optimizer.zero_grad()
         loss_pi, pi_info = compute_loss_pi(data)
-        (loss_pi).backward() # Ascent
+        loss_pi.backward() # Ascent of +ve Jpi or Descent of -ve Jpi
         pi_optimizer.step()
 
         # Record things
@@ -312,7 +309,8 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
                       deterministic)
 
 
-    def test_agent(epoch,n=1): # (Done)
+    def test_agent(epoch,n=5): # (Done)
+        global mu, pi, q1, q2, q1_pi, q2_pi
         total_reward = 0
         for j in range(n): # repeat n=5 times
             o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
@@ -332,6 +330,11 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
     o, r, d, ep_ret, ep_len = env.reset(), 0, False, 0, 0
     total_steps = steps_per_epoch * epochs
     reward_recorder = []
+
+
+
+
+
 
 
     # Main loop: collect experience in env and update/log each epoch
@@ -379,9 +382,11 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
         # Learning/Training
         #   Train pi, Q, and V after 5 epochs for 5 times,
         #   Train dyn/rew models from start:
-        if t // steps_per_epoch > train_model_epoch: # if epoch > 5
+        # if t // steps_per_epoch > train_model_epoch: # if epoch > 5
+        if t >= 3000:
             # Train 5 steps of Q, V, and pi,
             # then train 1 step of model.
+            # for j in range(5):
             for j in range(5):
                 batch = replay_buffer.sample_batch(batch_size)
                 updateAC(data=batch)
@@ -393,8 +398,10 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
 
 
         # End of epoch wrap-up
-        if t > 0 and t % steps_per_epoch == 0:
-            epoch = t // steps_per_epoch
+        # if t > 0 and t % steps_per_epoch == 0:
+        if (t+1) % steps_per_epoch == 0:
+            # epoch = t // steps_per_epoch
+            epoch = (t+1) // steps_per_epoch
 
             ## Added by Rami >> ##
             # Save model after each epoch:
@@ -403,49 +410,49 @@ def memb(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.
             ## << Added by Rami ##
 
             # if epoch > 5 and epoch % 10 == 0 start to test the agent:
-            if epoch > train_model_epoch and epoch % test_freq == 0:
+            # if epoch > train_model_epoch and epoch % test_freq == 0:
             # if epoch > train_model_epoch and epoch % 1 == 0:
                 # test the agent when we reach the test_freq:
-                reward_test = test_agent(epoch)
-                # save the experiment result:
-                # reward_recorder.append(reward_test)
-                # reward_nparray = np.asarray(reward_recorder)
-                # np.save(str(exp_name)+'_'+str(env_name)+'_'+str(save_freq)+'.npy',reward_nparray)
+            reward_test = test_agent(epoch)
+            # save the experiment result:
+            # reward_recorder.append(reward_test)
+            # reward_nparray = np.asarray(reward_recorder)
+            # np.save(str(exp_name)+'_'+str(env_name)+'_'+str(save_freq)+'.npy',reward_nparray)
 
-                ## Added by Rami >> ##
-                logger.log_tabular('Epoch', epoch)
+            ## Added by Rami >> ##
+            logger.log_tabular('Epoch', epoch)
 
-                logger.log_tabular('EpRet', with_min_and_max=True)
-                logger.log_tabular('EpLen', average_only=True)
+            logger.log_tabular('EpRet', with_min_and_max=True)
+            logger.log_tabular('EpLen', average_only=True)
 
-                logger.log_tabular('TestEpRet', with_min_and_max=True) # if n=1 no variance
-                logger.log_tabular('TestEpLen', average_only=True)
+            logger.log_tabular('TestEpRet', with_min_and_max=True) # if n=1 no variance
+            logger.log_tabular('TestEpLen', average_only=True)
 
-                logger.log_tabular('TotalEnvInteracts', t)
-                
-                logger.log_tabular('LogPi', with_min_and_max=True)
-                logger.log_tabular('LossPi', average_only=True)
+            logger.log_tabular('TotalEnvInteracts', t)
+            
+            logger.log_tabular('LogPi', with_min_and_max=True)
+            logger.log_tabular('LossPi', average_only=True)
 
-                logger.log_tabular('Q1Vals', with_min_and_max=True) 
-                logger.log_tabular('Q2Vals', with_min_and_max=True)
-                # logger.log_tabular('LossQ1', average_only=True)
-                # logger.log_tabular('LossQ2', average_only=True)
-                logger.log_tabular('V_Vals', with_min_and_max=True)
-                # logger.log_tabular('LossV', average_only=True)
-                logger.log_tabular('LossVal', average_only=True)
+            logger.log_tabular('Q1Vals', with_min_and_max=True) 
+            logger.log_tabular('Q2Vals', with_min_and_max=True)
+            # logger.log_tabular('LossQ1', average_only=True)
+            # logger.log_tabular('LossQ2', average_only=True)
+            logger.log_tabular('V_Vals', with_min_and_max=True)
+            # logger.log_tabular('LossV', average_only=True)
+            logger.log_tabular('LossVal', average_only=True)
 
 
-                ## Added by Rami >> ##
-                # logger.log_tabular('DynM', with_min_and_max=True) 
-                # logger.log_tabular('RewM', with_min_and_max=True)
-                logger.log_tabular('LossModel', average_only=True)
-                # logger.log_tabular('LossDyn', average_only=True)
-                # logger.log_tabular('LossRew', average_only=True)
-                ## << Added by Rami ##
+            ## Added by Rami >> ##
+            # logger.log_tabular('DynM', with_min_and_max=True) 
+            # logger.log_tabular('RewM', with_min_and_max=True)
+            logger.log_tabular('LossModel', average_only=True)
+            # logger.log_tabular('LossDyn', average_only=True)
+            # logger.log_tabular('LossRew', average_only=True)
+            ## << Added by Rami ##
 
-                logger.log_tabular('Time', time.time()-start_time)
-                logger.dump_tabular()
-                ## << Added by Rami ##
+            logger.log_tabular('Time', time.time()-start_time)
+            logger.dump_tabular()
+            ## << Added by Rami ##
 
             # if epoch % save_epoch == 0:
             #     # save the model after the final epoch:
