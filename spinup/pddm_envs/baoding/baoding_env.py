@@ -15,11 +15,12 @@
 import os
 import numpy as np
 from gym import utils
+from mujoco_py import load_model_from_path, MjSim
 import enum
 
-from pddm.envs import mujoco_env
-from pddm.envs.robot import Robot
-from pddm.envs.utils.quatmath import euler2quat, quatDiff2Vel
+from spinup.pddm_envs import mujoco_env
+from spinup.pddm_envs.robot import Robot
+from spinup.pddm_envs.utils.quatmath import euler2quat, quatDiff2Vel
 
 ## Define the task enum
 class Task(enum.Enum):

@@ -15,5 +15,5 @@
 import spinup.pddm_envs.cheetah
 import spinup.pddm_envs.ant
 import spinup.pddm_envs.dclaw
-#import spinup.pddm_envs.baoding
-#import spinup.pddm_envs.cube
+import spinup.pddm_envs.baoding
+import spinup.pddm_envs.cube
