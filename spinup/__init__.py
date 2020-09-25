@@ -26,7 +26,7 @@ from spinup.algos.pytorch.vpg.vpg import vpg as vpg_pytorch
 from spinup.algos.pytorch.memb.memb import memb as memb_pytorch
 from spinup.algos.pytorch.memb_pe.memb_pe import memb_pe as memb_pe_pytorch
 
-from spinup.algos.pytorch.mpc_sac.mpc_sac import mpc_sac as mpc_sac_pytorch
+#from spinup.algos.pytorch.mpc_sac.mpc_sac import mpc_sac as mpc_sac_pytorch
 
 
 
