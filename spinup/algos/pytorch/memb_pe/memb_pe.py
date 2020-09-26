@@ -8,6 +8,7 @@ import itertools
 import time
 
 ## ML & RL Impoorts
+import math
 import numpy as np
 import torch
 from torch.optim import Adam # {Adanm, SGD, RMSprop, ...}
@@ -71,9 +72,9 @@ Model Embedding Model Based Algorithm (MEMB)
 def memb_pe(
         env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), model=core.MLPModel,
         seed=0, steps_per_epoch=4000, epochs=125, replay_size=int(1e6), gamma=0.99,
-        polyak=0.995, dyn_lr=3e-4, rew_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alpha=0.4,
-        Gsteps=5, batch_size=100, start_steps=1000,
-        max_ep_len=40, save_freq=1,
+        polyak=0.995, dyn_lr=3e-4, rew_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alphai=0.4,
+        Gsteps=120, batch_size=100, start_steps=1000,
+        max_ep_len=40, save_freq=1, update_every=40,
         train_model_epoch=5, test_freq=2, num_tests=5, save_epoch=100,
         exp_name='', env_name='',
         logger_kwargs=dict()
@@ -188,7 +189,7 @@ def memb_pe(
     #                       - alpha*log pi(a|s)
     #                       + gamma*Expt_f[V'(f(s,pi))]] --> eq#8
     #   Optz pi--> max_pi{ Expt_s~D[V(s)] }
-    def compute_loss_pi(data): # Rami (Done)
+    def compute_loss_pi(data, alpha): # Rami (Done)
 
         o = data['obs']
 
@@ -209,7 +210,7 @@ def memb_pe(
     # Set up function for computing Q,V value-losses
     ### Value functions losses ###
     #   Optz--> min_phi,psi{ Jq(phi),Jv(psi) }
-    def compute_loss_val(data): # Rami (Done)
+    def compute_loss_val(data, alpha): # Rami (Done)
         
         o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
 
@@ -259,11 +260,11 @@ def memb_pe(
     logger.setup_pytorch_saver(ac)
 
 
-    def updateAC(data): # Rami (Done)
+    def updateAC(data, alpha): # Rami (Done)
 
         # First run one gradient descent step for Q1, Q2, and V
         val_optimizer.zero_grad()
-        loss_val, val_info = compute_loss_val(data)
+        loss_val, val_info = compute_loss_val(data, alpha)
         loss_val.backward() # Descent
         val_optimizer.step()
 
@@ -282,7 +283,7 @@ def memb_pe(
 
         # Next run one gradient descent step for pi.
         pi_optimizer.zero_grad()
-        loss_pi, pi_info = compute_loss_pi(data)
+        loss_pi, pi_info = compute_loss_pi(data, alpha)
         loss_pi.backward() # Ascent of +ve Jpi or Descent of -ve Jpi
         pi_optimizer.step()
 
@@ -405,12 +406,13 @@ def memb_pe(
         # Learning/Training
         #   Train pi, Q, and V after 5 epochs for 5 times,
         #   Train dyn/rew models from start:
-        if t >= (start_steps):
+        if t >= (start_steps) and t % update_every == 0:
             # Train "ACsteps" steps of Q, V, and pi,
             # then train 1 step of model.
+            alpha = alphai*(1-(1-math.exp(-4*((t-start_steps)/total_steps))))
             for j in range(Gsteps):
                 batch = replay_buffer.sample_batch(batch_size)
-                updateAC(data=batch)
+                updateAC(data=batch, alpha=alpha)
             updateDyn(data=batch)
             updateRew(data=batch)
 
