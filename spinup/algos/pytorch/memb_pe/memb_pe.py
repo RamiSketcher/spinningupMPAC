@@ -409,7 +409,7 @@ def memb_pe(
         if t >= (start_steps) and t % update_every == 0:
             # Train "ACsteps" steps of Q, V, and pi,
             # then train 1 step of model.
-            alpha = alphai*(1-(1-math.exp(-4*((t-start_steps)/total_steps))))
+            alpha = alphai*math.exp(-4*((t-start_steps)/total_steps))
             for j in range(Gsteps):
                 batch = replay_buffer.sample_batch(batch_size)
                 updateAC(data=batch, alpha=alpha)
