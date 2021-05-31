@@ -28,7 +28,7 @@ from spinup.utils.logx import EpochLogger
 from spinup.pddm_envs.gym_env import GymEnv
 
 
-device = torch.device("cuda:0")
+device = torch.device("cpu")
 
 
 
@@ -409,7 +409,11 @@ def memb_pe(
         if t >= (start_steps) and t % update_every == 0:
             # Train "ACsteps" steps of Q, V, and pi,
             # then train 1 step of model.
+<<<<<<< HEAD
             alpha = alphai*(1-(1-math.exp(-((t-start_steps)/total_steps))))
+=======
+            alpha = alphai*math.exp(-4*((t-start_steps)/total_steps))
+>>>>>>> 622ce5584d06168cf80735f2ab346b0b5d7eabd1
             for j in range(Gsteps):
                 batch = replay_buffer.sample_batch(batch_size)
                 updateAC(data=batch, alpha=alpha)

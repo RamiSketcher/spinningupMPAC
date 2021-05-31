@@ -29,7 +29,7 @@ from spinup.algos.pytorch.memb_sac_pe.memb_sac_pe import memb_sac_pe as memb_sac
 
 from spinup.algos.pytorch.memb_pe_test.memb_pe_test import memb_pe_test as memb_pe_test_pytorch
 
-from spinup.algos.pytorch.mpc_sac.mpc_sac import mpc_sac as mpc_sac_pytorch
+#from spinup.algos.pytorch.mpc_sac.mpc_sac import mpc_sac as mpc_sac_pytorch
 
 
 
