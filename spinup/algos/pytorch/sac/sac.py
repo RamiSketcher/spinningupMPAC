@@ -57,7 +57,7 @@ class ReplayBuffer:
 
 # Soft Actor-Critic (SAC) Algorithm
 def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0, 
-        steps_per_epoch=4000, epochs=100, replay_size=int(1e6), gamma=0.99, 
+        steps_per_epoch=4000, epochs=250, replay_size=int(1e6), gamma=0.99, 
         polyak=0.995, lr=1e-3, alpha=0.2,
         batch_size=100, start_steps=1000, 
         update_after=1000, update_every=50,
@@ -199,6 +199,7 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
 
         q1 = ac.q1(o,a)
         q2 = ac.q2(o,a)
+        # print('q1: ', q1.shape)
 
         # Bellman backup for Q functions
         with torch.no_grad():
@@ -209,6 +210,7 @@ def sac(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
             q1_pi_targ = ac_targ.q1(o2, a2)
             q2_pi_targ = ac_targ.q2(o2, a2)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
+            # print('q_pi_targ: ', q_pi_targ.shape)
             backup = r + gamma * (1 - d) * (q_pi_targ - alpha * logp_a2)
 
         # MSE loss against Bellman backup
@@ -396,7 +398,8 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--env', type=str, default='HalfCheetah-v2')
+    # parser.add_argument('--env', type=str, default='HalfCheetah-v2')
+    parser.add_argument('--env', type=str, default='pddm_cheetah-v0')
     parser.add_argument('--hid', type=int, default=256)
     parser.add_argument('--l', type=int, default=2)
     parser.add_argument('--gamma', type=float, default=0.99)
