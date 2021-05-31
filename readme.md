@@ -1,7 +1,10 @@
 **Modified by:** Rami Sketcher <br>
 <br>
 
-**Added Algorithms:** (MEMB) Model Embedding Model-Based RL ([Arxiv](https://arxiv.org/abs/2006.09234))  <br>
+**Added Algorithms:**
+- (MPC-SAC) Model Predictive-Actor Critic Reinforcement Learning for Dexterous Manipulation ([IEEEXplore](https://ieeexplore.ieee.org/document/9429677)) (Ours) <br>
+- (MEMB) Model Embedding Model-Based RL ([Arxiv](https://arxiv.org/abs/2006.09234))  <br>
+- (MEMB-PE) Model Embedding Model-Based RL + Probabilistic Ensemble (Ours) <br>
 <br>
 
 **Status:** Maintenance (expect bug fixes and minor updates)
