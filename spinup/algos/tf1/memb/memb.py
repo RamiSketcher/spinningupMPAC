@@ -65,7 +65,7 @@ def memb(env_fn, actor_critic=core.mlp_actor_critic, ac_kwargs=dict(), seed=0,
         polyak=0.995, model_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alpha=0.4,
         batch_size=100, start_steps=1000,
         max_ep_len=1000, save_freq=1,
-        train_model_epoch=5, test_freq=5, save_epoch=100,
+        train_model_epoch=5, test_freq=2, save_epoch=100,
         exp_name='', env_name='',
         logger_kwargs=dict()):
 
