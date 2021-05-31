@@ -74,7 +74,7 @@ def memb_pe(
         seed=0, steps_per_epoch=4000, epochs=125, replay_size=int(1e6), gamma=0.99,
         polyak=0.995, dyn_lr=3e-4, rew_lr=3e-4, value_lr=1e-3, pi_lr=3e-4, alphai=0.4,
         Gsteps=120, batch_size=100, start_steps=1000,
-        max_ep_len=40, save_freq=1, update_every=40,
+        max_ep_len=70, save_freq=1, update_every=40,
         train_model_epoch=5, test_freq=2, num_tests=5, save_epoch=100,
         exp_name='', env_name='',
         logger_kwargs=dict()
@@ -307,7 +307,6 @@ def memb_pe(
                 p_targ.data.add_((1 - polyak) * p.data)
 
 
-
     def updateDyn(data): # Rami (Done)
 
         # print("Model updating..")
@@ -333,8 +332,6 @@ def memb_pe(
         logger.store(**rew_info)
 
 
-
-
     def get_action(o, deterministic=False): # Rami (Done)
         return ac.act(torch.as_tensor(o, dtype=torch.float32).to(device), 
                     deterministic)
@@ -342,15 +339,20 @@ def memb_pe(
 
     def test_agent(): # (Done)
         total_reward = 0
+        total_score = 0 # Gaffar
         for j in range(num_tests): # repeat num_tests=5 times
-            o, r, d, ep_ret, ep_len = test_env.reset(), 0, False, 0, 0
+            o, r, d, ep_ret, ep_len, score = test_env.reset(), 0, False, 0, 0, 0 # Gaffar
             while not(d or (ep_len == max_ep_len)):
                 a = get_action(o, True)
-                o, r, d, _ = test_env.step(a)
+                o, r, d, info = test_env.step(a)
                 ep_ret += r
                 ep_len += 1
+                score = info['score'] # Gaffar
+
             total_reward += ep_ret
+            total_score += score # Gaffar
             logger.store(TestEpRet=ep_ret, TestEpLen=ep_len) ## By Rami
+            logger.store(Score = total_score) # Gaffar
 
         return total_reward/num_tests
 
@@ -441,6 +443,8 @@ def memb_pe(
 
             logger.log_tabular('EpRet', with_min_and_max=True)
             logger.log_tabular('EpLen', average_only=True)
+
+            logger.log_tabular('Score', average_only=True) # Gaffar
 
             logger.log_tabular('TestEpRet', with_min_and_max=True) # if n=1 no variance
             logger.log_tabular('TestEpLen', average_only=True)

@@ -160,7 +160,7 @@ class MLPDynModel(nn.Module): # Rami (Done)
         self.mu_layer = nn.Linear(hidden_sizes[-1], obs_dim)
         self.log_std_layer = nn.Linear(hidden_sizes[-1], obs_dim)
 
-    def forward(self, obs, act):
+    def forward(self, obs, act, deterministic=False, with_logprob=True):
 
         # st+1 ~ f(st+1|st,at;omega) = N(mu,std|st,at;omega)
         net_out = self.net(torch.cat([obs, act], dim=-1))
@@ -185,7 +185,7 @@ class MLPDynModelEnsemble(nn.Module):
         # self.delta4 = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)
         # self.delta5 = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)
 
-    def forward(self, obs, act):
+    def forward(self, obs, act, deterministic=False, with_logprob=True):
         delta1 = self.delta1(obs, act)
         delta2 = self.delta2(obs, act)
         delta3 = self.delta3(obs, act)
@@ -203,7 +203,7 @@ class MLPRewModel(nn.Module): # Rami (Done)
         self.mu_layer = nn.Linear(hidden_sizes[-1], 1)
         self.log_std_layer = nn.Linear(hidden_sizes[-1], 1)
 
-    def forward(self, obs, act):
+    def forward(self, obs, act, deterministic=False, with_logprob=True):
 
         # rt ~ R(rt|st,at;eqsi) =  N(mu,std|st,at;ph)
         net_out = self.net(torch.cat([obs, act], dim=-1))
@@ -228,7 +228,7 @@ class MLPRewModelEnsemble(nn.Module):
         # self.delta4 = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)
         # self.delta5 = MLPDynModel(obs_dim, act_dim, hidden_sizes, activation, output_activation)
 
-    def forward(self, obs, act):
+    def forward(self, obs, act, deterministic=False, with_logprob=True):
         reward1 = self.reward1(obs, act)
         # reward2 = self.reward2(obs, act)
         # reward3 = self.reward3(obs, act)
