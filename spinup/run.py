@@ -39,7 +39,7 @@ SUBSTITUTIONS = {'env': 'env_name',
 MPI_COMPATIBLE_ALGOS = ['vpg', 'trpo', 'ppo']
 
 # Algo names (used in a few places)
-BASE_ALGO_NAMES = ['vpg', 'trpo', 'ppo', 'ddpg', 'td3', 'sac', 'memb', 'memb_pe', 'mpc_sac']
+BASE_ALGO_NAMES = ['vpg', 'trpo', 'ppo', 'ddpg', 'td3', 'sac', 'memb', 'memb_pe', 'memb_sac_pe', 'memb_pe_test', 'mpc_sac']
 
 
 # Methods def
