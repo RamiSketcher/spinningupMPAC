@@ -16,6 +16,8 @@ DEFAULT_BACKEND = {
     'sac': 'pytorch',
     'memb': 'pytorch',
     'memb_pe': 'pytorch',
+    'memb_sac_pe': 'pytorch',
+    'memb_pe_test': 'pytorch',
     'mpc_sac': 'pytorch'
 }
 
